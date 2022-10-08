@@ -1,0 +1,5 @@
+{
+	"translator.engines": ["bing", "youdao"],
+	"translator.toLang": "en",
+	"suggest.noselect": true
+}
