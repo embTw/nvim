@@ -12,7 +12,7 @@ if empty(glob($HOME.'/.config/nvim/autoload/plug.vim'))
 	autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
 endif
 " ==================== Editor behavior ====================
-"set clipboard=unnamedplus
+set clipboard=unnamedplus
 set mouse=nv
 let &t_ut=''
 set autochdir
@@ -107,11 +107,20 @@ noremap L $
 " ==================== Insert Mode Cursor Movement ====================
 inoremap <c-l> <c-o>a
 
+" ==================== Running code ====================
+noremap r :call Run()<CR>
+func! Run()
+	exec "w"
+	if &filetype == 'c'
+		exec "!gcc % && ./a.out"
+	endif
+endfunction
+
 " ===
 " === Install Plugins with Vim-Plug
 " ===
 call plug#begin('$HOME/.config/nvim/plugged')
-Plug 'aonemd/quietlight.vim'	" 主题
+" Plug 'aonemd/quietlight.vim'	" 主题
 Plug 'tomtom/tcomment_vim'  	" 注释， 使用gcc注释一行
 Plug 'haya14busa/is.vim'    	" 解决搜索高亮问题并提升搜索
 Plug 'famiu/bufdelete.nvim'		" 实现类似于:bd的功能并保存布局
@@ -126,22 +135,41 @@ Plug 'easymotion/vim-easymotion'  " 快速跳转
 Plug 'brooth/far.vim'		" 搜索当前目录
 Plug 'voldikss/vim-floaterm' " float terminal
 Plug 'mbbill/undotree'
-" Plug 'vim-airline/vim-airline'		" 顶栏
+Plug 'olimorris/onedarkpro.nvim' " 主题
+Plug 'folke/tokyonight.nvim', { 'branch': 'main' }	" 主题
+Plug 'vim-airline/vim-airline'	" 底栏
+Plug 'vim-airline/vim-airline-themes'
+" Plug 'tomasr/molokai'		" molokai主题
 call plug#end()
 
 " ===
-" === quietlight plugins config
+" === colorscheme config
 " ===
-	set termguicolors " enable true colors support
-	set t_Co=256
-	set background=light
-	colorscheme quietlight
-	" 设置光标
-	highlight Cursor guibg=LightBlue
-	set guicursor=n-v-c-sm:block-nCursor,i-ci-ve:ver50-iCursor-block-blinkon50,r-cr-o:hor20-blinkon300-nCursor
-	highlight NormalFloat ctermfg=59 ctermbg=231 guifg=#333333 guibg=#d3d3d3
-	" 调整coc补全列表颜色
-	highlight CocMenuSel guibg=LightBlue
+	colorscheme onedark
+	autocmd ColorScheme * hi CocMenuSel ctermbg=237 guibg=#13354A
+	" set termguicolors " enable true colors support
+	" set t_Co=256
+	" set background=light
+	" colorscheme quietlight
+	" " 设置光标
+	" highlight Cursor guibg=LightBlue
+	" set guicursor=n-v-c-sm:block-nCursor,i-ci-ve:ver50-iCursor-block-blinkon50,r-cr-o:hor20-blinkon300-nCursor
+	" highlight NormalFloat ctermfg=59 ctermbg=231 guifg=#333333 guibg=#d3d3d3
+	" " 调整coc补全列表颜色
+	" highlight CocMenuSel guibg=LightBlue
+	 
+" ===
+" === vim_current_word
+" ===
+	" " Twins of word under cursor:
+	" let g:vim_current_word#highlight_twins = 1
+	" " The word under cursor:
+	" let g:vim_current_word#highlight_current_word = 1
+
+" ===
+" === vim-airline
+" ===
+	let g:airline#extensions#tabline#enabled = 1
 
 " ===
 " ===  bufdelete
@@ -151,13 +179,13 @@ call plug#end()
 " ===
 " === vim-tranlator
 " ===
-" let g:translator_target_lang = 'en'
-nmap <silent> <Leader>t <Plug>TranslateW
-vmap <silent> <Leader>t <Plug>TranslateWV
-nnoremap <silent><expr> <M-f> translator#window#float#has_scroll() ?
-                            \ translator#window#float#scroll(1) : "\<M-f>"
-nnoremap <silent><expr> <M-b> translator#window#float#has_scroll() ?
-                            \ translator#window#float#scroll(0) : "\<M-f>"
+	" let g:translator_target_lang = 'en'
+	nmap <silent> <Leader>t <Plug>TranslateW
+	vmap <silent> <Leader>t <Plug>TranslateWV
+	nnoremap <silent><expr> <M-f> translator#window#float#has_scroll() ?
+								\ translator#window#float#scroll(1) : "\<M-f>"
+	nnoremap <silent><expr> <M-b> translator#window#float#has_scroll() ?
+								\ translator#window#float#scroll(0) : "\<M-f>"
 
 " ===
 " === UltiSnips
@@ -203,12 +231,15 @@ nnoremap <space>u :UndotreeToggle<CR>
 	  return !col || getline('.')[col - 1]  =~# '\s'
 	endfunction
 
+	inoremap <silent><expr> <c-space> coc#refresh()
 	inoremap <silent><expr> <TAB>
 		  \ coc#pum#visible() ? coc#pum#next(1):
 		  \ CheckBackspace() ? "\<Tab>" :
 		  \ coc#refresh()
 	inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
-	inoremap <silent><expr> <cr> coc#pum#visible() ? coc#_select_confirm() : "\<C-g>u\<CR>"
+	" inoremap <silent><expr> <cr> coc#pum#visible() ? coc#_select_confirm() : "\<C-g>u\<CR>"
+	inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm()
+                              \: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
 
 
 	" GoTo code navigation.
@@ -216,6 +247,9 @@ nnoremap <space>u :UndotreeToggle<CR>
 	nmap <silent> gy <Plug>(coc-type-definition)
 	nmap <silent> gi <Plug>(coc-implementation)
 	nmap <silent> gr <Plug>(coc-references)
+
+	" 按住光标时突出显示该符号及其参考。
+	autocmd CursorHold * silent call CocActionAsync('highlight')
 
 	"show document in preview window
 	nnoremap <silent> <space>h :call ShowDocumentation()<CR>	" 查看帮助文档
@@ -229,6 +263,14 @@ nnoremap <space>u :UndotreeToggle<CR>
 		call feedkeys('K', 'in')
 	  endif
 	endfunction
+
+	augroup mygroup
+	  autocmd!
+	  " Setup formatexpr specified filetype(s)
+	  autocmd FileType typescript,json setl formatexpr=CocAction('formatSelected')
+	  " Update signature help on jump placeholder
+	  autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
+	augroup end
 
 	if has('nvim-0.4.0') || has('patch-8.2.0750')
 	  nnoremap <silent><nowait><expr> <C-f> coc#float#has_scroll() ? coc#float#scroll(1) : "\<C-f>"
